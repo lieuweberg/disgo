@@ -86,7 +86,12 @@ func gatewayHandlerGuildCreate(client *bot.Client, sequenceNumber int, shardID i
 		}
 		if client.MemberChunkingManager.MemberChunkingFilter()(event.ID) {
 			go func() {
-				if _, err := client.MemberChunkingManager.RequestMembersWithQuery(context.Background(), event.ID, "", 0); err != nil {
+				shard, err := client.Shard(event.ID)
+				if err != nil {
+					client.Logger.Error("failed to get shard of guild on guild_create", slog.Any("err", err))
+					return
+				}
+				if _, err := client.MemberChunkingManager.RequestMembersWithQuery(context.Background(), event.ID, shard.Intents().Has(gateway.IntentGuildPresences), "", 0); err != nil {
 					client.Logger.Error("failed to chunk guild on guild_create", slog.Any("err", err))
 				}
 			}()
